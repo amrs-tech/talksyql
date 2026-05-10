@@ -458,7 +458,7 @@ async function adminLogout() {
 async function loadSettings() {
   const data = await api("/api/admin/settings");
   el.llmModel.value = data.settings.llm.model || "gemini-3.1-flash-lite-preview";
-  el.sttModel.value = data.settings.stt.model || "scribe_v2";
+  el.sttModel.value = data.settings.stt.model || "whisper-large-v3-turbo";
   el.smtpHost.value = data.settings.email.host || "";
   el.smtpPort.value = data.settings.email.port || 587;
   el.smtpSecure.value = String(Boolean(data.settings.email.secure));
@@ -629,7 +629,7 @@ function formatDate(value) {
 function providerStatusText(settings) {
   return [
     `Gemini ${settings.llm.hasApiKey ? "configured" : "missing"}`,
-    `ElevenLabs ${settings.stt.hasApiKey ? "configured" : "missing"}`,
+    `Groq Whisper ${settings.stt.hasApiKey ? "configured" : "missing"}`,
     `Email ${settings.email.configured ? "configured" : "missing"}`
   ].join(" · ");
 }

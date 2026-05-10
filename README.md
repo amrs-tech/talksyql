@@ -38,7 +38,7 @@ For local development, defaults are:
 
 Configure providers in the admin panel.
 
-- ElevenLabs Speech to Text: `POST https://api.elevenlabs.io/v1/speech-to-text`, default model `scribe_v2`
+- Groq Speech to Text: `POST https://api.groq.com/openai/v1/audio/transcriptions`, default model `whisper-large-v3-turbo`
 - Gemini: `POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`, default model `gemini-3.1-flash-lite-preview`
 - Email OTP delivery: SMTP host, port, security mode, from email/name, username, and password.
 
@@ -47,6 +47,12 @@ Common SMTP examples:
 - Gmail: host `smtp.gmail.com`, port `587`, security `STARTTLS`, username is the Gmail address, password is an app password.
 - SendGrid: host `smtp.sendgrid.net`, port `587`, username `apikey`, password is the SendGrid API key.
 - Amazon SES SMTP: use the region SMTP endpoint, port `587`, username/password from SES SMTP credentials.
+
+Groq transcription notes:
+
+- Recommended model for the free/learning version: `whisper-large-v3-turbo`.
+- Higher-accuracy alternative: `whisper-large-v3`.
+- Keep uploaded audio under 25 MB for free-tier compatibility.
 
 ## Storage Rules
 
@@ -76,7 +82,7 @@ This repo includes `render.yaml` for a Render web service plus Render Postgres.
    - `TALKSYQL_ADMIN_PASSWORD`
 4. Render generates `TALKSYQL_SECRET` and injects `DATABASE_URL` from `talksyql-db`.
 5. After deploy, open the Render URL and log in to Admin.
-6. Configure Gemini, ElevenLabs, and SMTP settings in Admin.
+6. Configure Gemini, Groq Whisper, and SMTP settings in Admin.
 
 Render settings used by the Blueprint:
 

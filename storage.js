@@ -13,7 +13,7 @@ function createStorage({ databaseUrl }) {
 function defaultSettings() {
   return {
     llm: { provider: "gemini", model: "gemini-3.1-flash-lite-preview", apiKeyEnc: null },
-    stt: { provider: "elevenlabs", model: "scribe_v2", apiKeyEnc: null },
+    stt: { provider: "groq", model: "whisper-large-v3-turbo", apiKeyEnc: null },
     email: {
       provider: "smtp",
       host: "",
@@ -51,11 +51,17 @@ function normalizeDb(db) {
 
 function normalizeSettings(settings) {
   const defaults = defaultSettings();
+  const stt = { ...defaults.stt, ...(settings.stt || {}) };
+  if (stt.provider !== "groq") {
+    stt.provider = "groq";
+    stt.model = defaults.stt.model;
+    stt.apiKeyEnc = null;
+  }
   return {
     ...defaults,
     ...settings,
     llm: { ...defaults.llm, ...(settings.llm || {}) },
-    stt: { ...defaults.stt, ...(settings.stt || {}) },
+    stt,
     email: { ...defaults.email, ...(settings.email || {}) }
   };
 }

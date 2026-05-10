@@ -311,8 +311,8 @@ async function routeApi(req, res, url) {
       settings.llm.apiKeyEnc = encrypt(body.llmApiKey.trim());
     }
 
-    settings.stt.provider = "elevenlabs";
-    settings.stt.model = safeModelName(body.sttModel || settings.stt.model || "scribe_v2");
+    settings.stt.provider = "groq";
+    settings.stt.model = safeModelName(body.sttModel || settings.stt.model || "whisper-large-v3-turbo");
     if (typeof body.sttApiKey === "string" && body.sttApiKey.trim()) {
       settings.stt.apiKeyEnc = encrypt(body.sttApiKey.trim());
     }
@@ -377,31 +377,33 @@ async function transcribeAudio(body) {
   const settings = await storage.getSettings();
   const apiKey = decrypt(settings.stt.apiKeyEnc);
   if (!apiKey) {
-    throwStatus(409, "ElevenLabs API key is not configured. Admin can add it in Provider Settings.");
+    throwStatus(409, "Groq API key is not configured. Admin can add it in Provider Settings.");
   }
 
   const bytes = Buffer.from(audioBase64, "base64");
-  if (bytes.length > MAX_JSON_BYTES) {
-    throwStatus(413, "Audio file is too large for this server.");
+  if (bytes.length > 25 * 1024 * 1024) {
+    throwStatus(413, "Audio file is too large for Groq free-tier transcription. Keep uploads under 25 MB.");
   }
 
   const form = new FormData();
-  form.append("model_id", settings.stt.model || "scribe_v2");
+  form.append("model", settings.stt.model || "whisper-large-v3-turbo");
+  form.append("response_format", "json");
+  form.append("temperature", "0");
   form.append("file", new Blob([bytes], { type: mimeType }), fileName);
 
-  const response = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+  const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
     method: "POST",
-    headers: { "xi-api-key": apiKey },
+    headers: { Authorization: `Bearer ${apiKey}` },
     body: form
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throwStatus(response.status, payload.detail?.message || payload.message || "ElevenLabs transcription failed.");
+    throwStatus(response.status, payload.error?.message || payload.message || "Groq transcription failed.");
   }
 
   const text = String(payload.text || "").trim();
   if (!text) {
-    throwStatus(502, "ElevenLabs returned an empty transcript.");
+    throwStatus(502, "Groq returned an empty transcript.");
   }
   return text;
 }
@@ -800,7 +802,7 @@ function publicSettings(settings) {
       hasApiKey: Boolean(settings.llm.apiKeyEnc)
     },
     stt: {
-      provider: "elevenlabs",
+      provider: "groq",
       model: settings.stt.model,
       hasApiKey: Boolean(settings.stt.apiKeyEnc)
     },

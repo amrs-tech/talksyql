@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>TalkSyQL</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="TalkSyQL home">
+          <span class="brand-mark">tq</span>
+          <span>
+            <strong>TalkSyQL</strong>
+            <small>Voice to SQL</small>
+          </span>
+        </a>
+        <nav class="top-actions" aria-label="Primary actions">
+          <select id="themeSelect" class="theme-select" aria-label="Theme">
+            <option value="system">System</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+          <button class="ghost-button" id="historyButton" type="button">History</button>
+          <button class="ghost-button" id="adminButton" type="button">Admin</button>
+          <button class="primary-button" id="loginButton" type="button">Login</button>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero-band" aria-labelledby="heroTitle">
+          <div class="hero-copy">
+            <p class="eyebrow">Audio, intent, dialect, query</p>
+            <h1 id="heroTitle">TalkSyQL</h1>
+            <br>
+            <p>
+              Speak or upload a request, choose the target database style, add optional context,
+              and generate SQL with provider-backed transcription and LLM output.
+            </p>
+          </div>
+          <div class="status-strip" aria-live="polite">
+            <span id="providerStatus">Checking providers...</span>
+            <span id="storageStatus">Anonymous output is not stored.</span>
+          </div>
+        </section>
+
+        <section class="workspace-grid">
+          <div class="panel recorder-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Input</p>
+                <h2>Capture request</h2>
+              </div>
+              <span class="pill" id="recordingState">Idle</span>
+            </div>
+
+            <div class="record-zone">
+              <button class="record-button" id="recordButton" type="button" aria-label="Start recording">
+                <span class="record-dot"></span>
+              </button>
+              <div>
+                <strong id="recordTitle">Record audio</strong>
+                <p id="recordMeta">Use your microphone or upload an audio file.</p>
+              </div>
+            </div>
+
+            <div class="inline-controls">
+              <label class="file-picker">
+                <input id="audioFile" type="file" accept="audio/*,video/*" />
+                <span>Upload audio</span>
+              </label>
+              <button class="secondary-button" id="transcribeButton" type="button">Transcribe</button>
+              <button class="ghost-button" id="clearAudioButton" type="button">Clear</button>
+            </div>
+
+            <label class="field">
+              <span>Transcript or typed request</span>
+              <textarea id="transcriptInput" rows="8" placeholder="Example: Show the top 20 customers by revenue in 2025, excluding refunded orders."></textarea>
+            </label>
+
+            <label class="field">
+              <span>Optional model context</span>
+              <textarea id="extraInput" rows="4" placeholder="Example: Tables are customers, orders, and refunds. Use customer_id joins."></textarea>
+            </label>
+          </div>
+
+          <div class="panel config-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Output</p>
+                <h2>Database style</h2>
+              </div>
+              <span class="pill" id="selectedDbPill">PostgreSQL</span>
+            </div>
+
+            <div id="databaseGrid" class="database-grid" role="radiogroup" aria-label="Database style"></div>
+
+            <button class="primary-button wide" id="generateButton" type="button">Generate SQL</button>
+
+            <div class="result-block">
+              <div class="result-heading">
+                <span>SQL output</span>
+                <button class="icon-button" id="copyButton" type="button" title="Copy SQL" aria-label="Copy SQL">⧉</button>
+              </div>
+              <pre id="sqlOutput">Your SQL will appear here.</pre>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="loginDialog" class="modal">
+      <form method="dialog" class="modal-card" id="loginForm">
+        <button class="icon-button modal-close" value="cancel" aria-label="Close">×</button>
+        <p class="eyebrow">Email login</p>
+        <h2>Save your SQL history</h2>
+        <label class="field">
+          <span>Email</span>
+          <input id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+        </label>
+        <button class="secondary-button wide" id="requestCodeButton" type="button">Send code</button>
+        <label class="field">
+          <span>6-digit code</span>
+          <input id="loginCode" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" />
+        </label>
+        <button class="primary-button wide" id="verifyCodeButton" type="button">Verify and login</button>
+        <p class="modal-note" id="loginNote">A 6-digit code will be sent to your email.</p>
+      </form>
+    </dialog>
+
+    <dialog id="historyDialog" class="modal">
+      <div class="modal-card large">
+        <button class="icon-button modal-close" id="closeHistoryButton" type="button" aria-label="Close">×</button>
+        <p class="eyebrow">Saved runs</p>
+        <h2>History</h2>
+        <div id="historyList" class="list-stack"></div>
+      </div>
+    </dialog>
+
+    <dialog id="adminDialog" class="modal">
+      <div class="modal-card admin-card">
+        <button class="icon-button modal-close" id="closeAdminButton" type="button" aria-label="Close">×</button>
+        <p class="eyebrow">Admin</p>
+        <h2>Provider and data control</h2>
+        <div id="adminLogin" class="admin-section">
+          <label class="field">
+            <span>Admin email</span>
+            <input id="adminEmail" type="email" placeholder="admin@talksyql.local" />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input id="adminPassword" type="password" placeholder="••••••••" />
+          </label>
+          <button class="primary-button wide" id="adminLoginButton" type="button">Login as admin</button>
+        </div>
+        <div id="adminWorkspace" class="admin-section hidden">
+          <div class="settings-grid">
+            <label class="field">
+              <span>Gemini model</span>
+              <input id="llmModel" placeholder="gemini-3.1-flash-lite-preview" />
+            </label>
+            <label class="field">
+              <span>Gemini API key</span>
+              <input id="llmApiKey" type="password" placeholder="Leave blank to keep existing" />
+            </label>
+            <label class="field">
+              <span>ElevenLabs model</span>
+              <input id="sttModel" placeholder="scribe_v2" />
+            </label>
+            <label class="field">
+              <span>ElevenLabs API key</span>
+              <input id="sttApiKey" type="password" placeholder="Leave blank to keep existing" />
+            </label>
+          </div>
+          <button class="secondary-button wide" id="saveSettingsButton" type="button">Save provider and email settings</button>
+          <div class="admin-divider">
+            <p class="eyebrow">Email delivery</p>
+          </div>
+          <div class="settings-grid">
+            <label class="field">
+              <span>SMTP host</span>
+              <input id="smtpHost" placeholder="smtp.gmail.com" />
+            </label>
+            <label class="field">
+              <span>SMTP port</span>
+              <input id="smtpPort" inputmode="numeric" placeholder="587" />
+            </label>
+            <label class="field">
+              <span>Security</span>
+              <select id="smtpSecure" class="field-select">
+                <option value="false">STARTTLS / plain upgrade</option>
+                <option value="true">Implicit TLS</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>From email</span>
+              <input id="smtpFromEmail" type="email" placeholder="login@yourdomain.com" />
+            </label>
+            <label class="field">
+              <span>From name</span>
+              <input id="smtpFromName" placeholder="talksyql" />
+            </label>
+            <label class="field">
+              <span>SMTP username</span>
+              <input id="smtpUsername" autocomplete="username" placeholder="SMTP username" />
+            </label>
+            <label class="field full">
+              <span>SMTP password</span>
+              <input id="smtpPassword" type="password" autocomplete="new-password" placeholder="Leave blank to keep existing" />
+            </label>
+          </div>
+          <div class="admin-tabs">
+            <button class="ghost-button active" data-admin-tab="users" type="button">Users</button>
+            <button class="ghost-button" data-admin-tab="histories" type="button">Input-output</button>
+            <button class="ghost-button" id="adminLogoutButton" type="button">Logout</button>
+          </div>
+          <div id="adminList" class="list-stack"></div>
+        </div>
+      </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js"></script>
+  </body>
+</html>

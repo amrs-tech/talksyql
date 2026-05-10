@@ -1,0 +1,17 @@
+{
+  "name": "talksyql",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered voice/audio to SQL query generator with provider administration and user history.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

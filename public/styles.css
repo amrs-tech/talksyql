@@ -267,6 +267,23 @@ h2 {
   align-items: start;
 }
 
+.site-footer {
+  padding: 28px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.site-footer a {
+  color: var(--cyan);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+}
+
 .panel,
 .modal-card {
   border: 1px solid var(--line);
